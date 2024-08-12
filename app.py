@@ -5,6 +5,7 @@ import soundfile as sf
 from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, Shift
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 # Define augmentation pipeline
 augment = Compose([
@@ -15,6 +16,17 @@ augment = Compose([
 ])
 
 dataset_path = "Dataset"
+data = []
+labels = []
+fixed_length = 128  # Set a fixed length for the spectrograms (time dimension)
+
+# Function to pad or truncate spectrograms
+def pad_or_truncate(spectrogram, max_len):
+    if spectrogram.shape[1] > max_len:
+        return spectrogram[:, :max_len]
+    else:
+        pad_width = max_len - spectrogram.shape[1]
+        return np.pad(spectrogram, ((0, 0), (0, pad_width)), mode='constant')
 
 # Iterate through classes and files
 for class_folder in os.listdir(dataset_path):
@@ -37,10 +49,26 @@ for class_folder in os.listdir(dataset_path):
             S = librosa.feature.melspectrogram(y=augmented_audio, sr=sr, n_mels=128, fmax=8000)
             S_dB = librosa.power_to_db(S, ref=np.max)
 
-            # Plot and display the Mel spectrogram
+            # Pad or truncate spectrogram
+            S_dB_padded = pad_or_truncate(S_dB, fixed_length)
+
+            # Store the padded/truncated Mel spectrogram data and label
+            data.append(S_dB_padded)
+            labels.append(class_folder)
+
+            # Optionally plot the Mel spectrogram
             fig, ax = plt.subplots()
-            img = librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000, ax=ax)
+            img = librosa.display.specshow(S_dB_padded, x_axis='time', y_axis='mel', sr=sr, fmax=8000, ax=ax)
             fig.colorbar(img, ax=ax, format='%+2.0f dB')
             ax.set(title=f'Mel-frequency spectrogram for {audio_file}')
             plt.show()
 
+# Convert lists to numpy arrays
+data = np.array(data)
+labels = np.array(labels)
+
+# Save the data and labels to a pickle file
+with open("data.pickle", "wb") as f:
+    pickle.dump({"data": data, "labels": labels}, f)
+
+print("Data and labels have been saved to data.pickle.")
