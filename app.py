@@ -52,8 +52,8 @@ for class_folder in os.listdir(dataset_path):
             # Pad or truncate spectrogram
             S_dB_padded = pad_or_truncate(S_dB, fixed_length)
 
-            # Store the padded/truncated Mel spectrogram data and label
-            data.append(S_dB_padded)
+            # Ensure the data is stored as a float32 numpy array
+            data.append(S_dB_padded.astype(np.float32))
             labels.append(class_folder)
 
             # Optionally plot the Mel spectrogram
@@ -64,7 +64,7 @@ for class_folder in os.listdir(dataset_path):
             plt.show()
 
 # Convert lists to numpy arrays
-data = np.array(data)
+data = np.array(data, dtype=np.float32)
 labels = np.array(labels)
 
 # Save the data and labels to a pickle file
