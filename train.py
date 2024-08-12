@@ -41,3 +41,7 @@ model.summary()
 
 # Train model
 model.fit(data, labels, epochs=20, batch_size=8, validation_split=0.2)
+
+f=open("model.pickle","wb")
+pickle.dump({"model":model},f)
+f.close()
